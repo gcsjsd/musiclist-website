@@ -4,11 +4,17 @@ const favicon = require('serve-favicon');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
 const index = require('./routes/index');
-const users = require('./routes/users');
+//const users = require('./routes/users');
+const users = require('./routes/api/users');
 
 const app = express();
+//connect Mongoose
+mongoose.connect('mongodb://localhost/User');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -22,9 +28,25 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(require('express-session')({
+	secret:'Spurs',
+	resave:false,
+	saveUninitialized:false
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', index);
 app.use('/sendjson', index);
 app.use('/users', users);
+app.use('/api/users',users);
+
+// Configure Passport
+const User = require('./models/user');
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
