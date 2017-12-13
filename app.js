@@ -7,13 +7,18 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-
+const expressSession = require('express-session')({
+  secret: 'Spurs',
+  resave: false,
+  saveUninitialized: false,
+});
+const User = require('./models/user');
 const index = require('./routes/index');
-//const users = require('./routes/users');
+// const users = require('./routes/users');
 const users = require('./routes/api/users');
 
 const app = express();
-//connect Mongoose
+// connect Mongoose
 mongoose.connect('mongodb://localhost/User');
 
 // view engine setup
@@ -21,18 +26,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(require('express-session')({
-	secret:'Spurs',
-	resave:false,
-	saveUninitialized:false
-}));
+app.use(expressSession);
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -40,10 +41,9 @@ app.use(passport.session());
 app.use('/', index);
 app.use('/sendjson', index);
 app.use('/users', users);
-app.use('/api/users',users);
+app.use('/api/users', users);
 
 // Configure Passport
-const User = require('./models/user');
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
